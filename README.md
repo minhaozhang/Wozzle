@@ -4,6 +4,16 @@
 
 ![icon](docs/wozzle-icon.png)
 
+## Screenshots
+
+| Dashboard | Live logs |
+|:---:|:---:|
+| ![Dashboard](docs/screenshots/dashboard.png) | ![Logs](docs/screenshots/logs.png) |
+
+| Inspect | Terminal |
+|:---:|:---:|
+| ![Inspect](docs/screenshots/inspect.png) | ![Terminal](docs/screenshots/terminal.png) |
+
 ## Features
 
 - **Live log streaming** — `wslc logs -f` bridged to the browser: timestamps, regex/text filtering, pause/resume, download, auto-reconnect, and stream resumption across container restarts
