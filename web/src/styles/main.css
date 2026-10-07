@@ -1,0 +1,281 @@
+/* Wozzle — Dozzle 风格暗色主题 */
+:root {
+  --bg: #0e1217;
+  --bg-panel: #151b23;
+  --bg-elev: #1b232e;
+  --bg-hover: #202a37;
+  --bg-active: #243043;
+  --border: #2a3442;
+  --border-soft: #222b38;
+  --text: #e6edf3;
+  --text-dim: #8b98a9;
+  --text-faint: #5c6878;
+  --accent: #4f8cff;
+  --accent-soft: rgba(79, 140, 255, 0.16);
+  --green: #3fb950;
+  --red: #f85149;
+  --amber: #d29922;
+  --purple: #bc8cff;
+  --mono: ui-monospace, 'Cascadia Mono', 'JetBrains Mono', 'Fira Code', Consolas, 'Courier New', monospace;
+  --sans: -apple-system, 'Segoe UI', 'Microsoft YaHei', Roboto, Helvetica, Arial, sans-serif;
+  --sidebar-w: 304px;
+  --radius: 8px;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+#app {
+  height: 100vh;
+  display: flex;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #2c3644;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3a4757;
+  background-clip: padding-box;
+}
+
+/* ---------- 布局 ---------- */
+.app-shell {
+  display: flex;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------- 通用 ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: var(--sans);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s, border-color 0.12s;
+  user-select: none;
+}
+.btn:hover {
+  background: var(--bg-hover);
+  border-color: #38455a;
+}
+.btn.active {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn.danger {
+  color: var(--red);
+}
+.btn.danger:hover {
+  background: rgba(248, 81, 73, 0.12);
+  border-color: var(--red);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #0d1117;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.input:focus {
+  border-color: var(--accent);
+}
+.input::placeholder {
+  color: var(--text-faint);
+}
+.input.invalid {
+  border-color: var(--red);
+}
+
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.dot.running {
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(63, 185, 80, 0.8);
+}
+.dot.paused {
+  background: var(--amber);
+}
+.dot.restarting {
+  background: var(--accent);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.dot.exited,
+.dot.created {
+  background: #5b6572;
+}
+.dot.dead {
+  background: var(--red);
+}
+.dot.unknown {
+  background: #768390;
+}
+.dot.offline {
+  background: #768390;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1.5;
+  flex: none;
+}
+.badge.healthy {
+  color: var(--green);
+  background: rgba(63, 185, 80, 0.14);
+}
+.badge.unhealthy {
+  color: var(--red);
+  background: rgba(248, 81, 73, 0.14);
+}
+.badge.starting {
+  color: var(--amber);
+  background: rgba(210, 153, 34, 0.14);
+}
+
+.code {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: #0d1117;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.page {
+  padding: 18px 22px;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  flex: 1;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.page-header h1 {
+  font-size: 17px;
+  font-weight: 650;
+  margin: 0;
+}
+.page-header .sub {
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+.spacer {
+  flex: 1;
+}
+
+.empty {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 48px 16px;
+  font-size: 13.5px;
+}
+.empty .icon {
+  font-size: 30px;
+  display: block;
+  margin-bottom: 10px;
+  opacity: 0.6;
+}
+
+.error-text {
+  color: var(--red);
+  font-size: 12.5px;
+}
+
+/* ---------- uPlot 暗色微调 ---------- */
+.uplot {
+  font-family: var(--sans);
+}
+.uplot .legend {
+  font-size: 10.5px;
+  color: var(--text-dim);
+}
+.uplot .axis,
+.uplot .legend {
+  stroke: none;
+}

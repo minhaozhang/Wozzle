@@ -1,0 +1,14 @@
+# binaries
+wozzle.exe
+*.exe
+
+# go
+/vendor/
+
+# node
+web/node_modules/
+web/dist/assets/
+.DS_Store
+
+# logs
+*.log
