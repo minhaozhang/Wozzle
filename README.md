@@ -105,3 +105,7 @@ WSL container engine (session manager)
 
 - [docs/API.md](docs/API.md) — REST / WebSocket contract (single source of truth)
 - [docs/schema/](docs/schema/) — raw `wslc` JSON output samples
+
+## License
+
+[MIT](LICENSE) © minghaozhang
