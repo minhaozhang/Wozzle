@@ -28,6 +28,7 @@ func New(exe string) *CLI {
 func (c *CLI) command(ctx context.Context, args ...string) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, c.exe, args...)
 	cmd.Env = append(os.Environ(), "WSL_UTF8=1")
+	hideWindow(cmd) // no console flash when running as a GUI-subsystem exe
 	return cmd
 }
 

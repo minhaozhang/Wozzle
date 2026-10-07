@@ -63,7 +63,9 @@ func showWindow(url string) (err error) {
 func OpenInBrowser(url string) { openInBrowser(url) }
 
 func openInBrowser(url string) {
-	_ = exec.Command("cmd", "/c", "start", "", url).Start()
+	// explorer.exe is a GUI-subsystem binary: no console flash from
+	// windowsgui builds (unlike `cmd /c start`).
+	_ = exec.Command("explorer.exe", url).Start()
 }
 
 // WaitForHTTP polls the server until it answers or the timeout expires; used
