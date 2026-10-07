@@ -42,6 +42,27 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          body: |
+            First public release — Dozzle-style monitoring for **WSL 3.0 native containers** (`wslc`), in a single binary.
+
+            ## Highlights
+
+            - **Live log streaming** — tail/backfill, regex & text filtering, pause/resume, download, auto-reconnect across container restarts
+            - **Resource monitoring** — CPU / memory / network / block I/O / PIDs with rolling charts (2 s refresh)
+            - **Event-driven** container list refresh
+            - **Web terminal** — xterm.js wired to `wslc exec`
+            - **Container control** — start / stop / kill / restart / remove, behind confirmation dialogs
+            - **Desktop mode** — system tray + WebView2 window, boot autostart, `wozzle.json` config, headless server mode
+
+            ## Requirements
+
+            - Windows 10/11 with WSL 3.0+ (`wslc.exe` on PATH)
+            - WebView2 runtime (preinstalled on Windows 10/11)
+
+            ## Downloads
+
+            - `wozzle.exe` — desktop build (tray + window, no console)
+            - `wozzle-console.exe` — console / server build
           files: |
             wozzle.exe
             wozzle-console.exe
