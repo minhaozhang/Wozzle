@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useLogsStream, type LogRow } from '../composables/useLogsStream'
 import { containerById } from '../stores/containers'
@@ -105,7 +105,7 @@ function download(): void {
   document.body.appendChild(a)
   a.click()
   a.remove()
-  URL.revokeObjectURL(url)
+  setTimeout(() => URL.revokeObjectURL(url), 5000)
 }
 
 const statusClass = computed(() => status.value)
@@ -123,12 +123,23 @@ const statusText = computed(() => {
   }
 })
 
+let ro: ResizeObserver | null = null
+
 onMounted(() => {
   const el = scrollEl.value
   if (el) {
     viewportH.value = el.clientHeight
     scrollToEnd()
   }
+  ro = new ResizeObserver(() => {
+    if (scrollEl.value) viewportH.value = scrollEl.value.clientHeight
+  })
+  if (el) ro.observe(el)
+})
+
+onBeforeUnmount(() => {
+  ro?.disconnect()
+  ro = null
 })
 
 function goTab(tab: 'inspect' | 'terminal'): void {

@@ -1,6 +1,5 @@
 import type {
   Container,
-  Event,
   Image,
   InspectResponse,
   LogsResponse,

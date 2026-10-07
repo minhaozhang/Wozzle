@@ -29,23 +29,22 @@ function makeOptions(width: number, height: number): uPlot.Options {
     mode: 1,
     cursor: {
       drag: { x: false, y: false },
-      focus: false,
     },
-    select: { show: false },
+    select: { show: false, left: 0, top: 0, width: 0, height: 0 },
     legend: {
       show: true,
       live: true,
     },
     scales: {
       x: { time: false, range: () => [Date.now() / 1000 - WINDOW_S - 2, Date.now() / 1000] },
-      y: { range: (u, min) => [Math.min(0, min), 100] },
+      y: { range: (_u, min) => [Math.min(0, min), 100] },
     },
     axes: [
       {
         stroke: '#5c6878',
         grid: { show: true, stroke: '#1c2430', width: 1 },
         ticks: { show: false },
-        values: (u, vals) => vals.map((v) => (v == null ? '--' : fmtClock(v))),
+        values: (_u, vals) => vals.map((v) => (v == null ? '--' : fmtClock(v))),
         font: '10px ui-monospace, Consolas, monospace',
         size: 46,
       },
@@ -55,7 +54,7 @@ function makeOptions(width: number, height: number): uPlot.Options {
         ticks: { show: false },
         font: '10px ui-monospace, Consolas, monospace',
         size: 34,
-        values: (u, vals) => vals.map((v) => (v == null ? '--' : String(Math.round(v)))),
+        values: (_u, vals) => vals.map((v) => (v == null ? '--' : String(Math.round(v)))),
       },
     ],
     series: [
@@ -94,7 +93,7 @@ function updateData(): void {
 onMounted(() => {
   if (!el.value) return
   const rect = el.value.getBoundingClientRect()
-  chart = new uPlot(makeOptions(Math.max(200, rect.width), props.height ?? 118), [[]] as unknown as uPlot.AlignedData, el.value)
+  chart = new uPlot(makeOptions(Math.max(200, rect.width), props.height ?? 118), [[], [], []] as unknown as uPlot.AlignedData, el.value)
   updateData()
   observer = new ResizeObserver((entries) => {
     if (!chart) return
