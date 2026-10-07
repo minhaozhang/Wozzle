@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Build frontend
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Build (desktop)
+        run: go build -ldflags "-s -w -H windowsgui" -o wozzle.exe .
+
+      - name: Build (console)
+        run: go build -ldflags "-s -w" -o wozzle-console.exe .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wozzle-windows
+          path: |
+            wozzle.exe
+            wozzle-console.exe
+          retention-days: 7
