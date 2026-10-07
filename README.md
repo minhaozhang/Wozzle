@@ -1,53 +1,58 @@
 # Wozzle
 
-> 像 [Dozzle](https://github.com/amir20/dozzle) 监控 Docker 那样，实时监控 **WSL 3.0 原生容器（wslc）**：日志流、资源曲线、容器事件、网页终端。桌面模式 = 托盘 + WebView2 独立窗口，一个 exe 全搞定。
+> Monitor **WSL 3.0 native containers** (`wslc`) in real time — live logs, resource charts, container events and a web terminal — the way [Dozzle](https://github.com/amir20/dozzle) does it for Docker. Ships as a **single exe** with the web UI embedded.
 
-## 功能
+![icon](docs/wozzle-icon.png)
 
-- **实时日志**：`wslc logs -f` 流式桥接到浏览器；时间戳、正则/文本过滤、暂停/继续、下载、断线自动重连、容器重启自动续流
-- **资源监控**：CPU / 内存 / 网络 / 块 IO / PIDs，2 秒刷新，Dashboard 滚动曲线
-- **事件流**：`wslc events` 实时推送，容器列表即时刷新
-- **网页终端**：xterm.js 直连 `wslc exec -i -t`
-- **控制操作**：start / stop / kill / restart / remove（带确认）
-- **单文件分发**：前端 `embed` 进 Go 二进制，`wozzle.exe` 拷走即用
+## Features
 
-## 环境要求
+- **Live log streaming** — `wslc logs -f` bridged to the browser: timestamps, regex/text filtering, pause/resume, download, auto-reconnect, and stream resumption across container restarts
+- **Resource monitoring** — CPU / memory / network / block I/O / PIDs, refreshed every 2 s with rolling dashboard charts
+- **Event stream** — `wslc events` pushed live; the container list refreshes instantly
+- **Web terminal** — xterm.js wired straight to `wslc exec -i -t`
+- **Container control** — start / stop / kill / restart / remove, behind confirmation dialogs
+- **Desktop experience** — system tray + native WebView2 window, with an optional headless server mode
 
-- Windows 10/11 + **WSL 3.0+**（`wsl --version` ≥ 2.9.3，容器功能 GA 版更好）
-- `wslc.exe` 在 PATH（`C:\Program Files\WSL\wslc.exe`，随 WSL 附带）
-- 已有容器运行（`wslc run ...`），镜像拉取建议配置可达的 registry（如 `docker.m.daocloud.io/library/alpine`）
+## Requirements
 
-## 构建与运行
+- Windows 10/11 with **WSL 3.0+** (`wsl --version` reporting 2.9.3 or higher; GA builds recommended)
+- `wslc.exe` on PATH — ships with WSL at `C:\Program Files\WSL\wslc.exe`
+- Containers running under WSL containers (`wslc run ...`). If Docker Hub is unreachable, pull from a mirror, e.g. `wslc pull docker.m.daocloud.io/library/alpine`
 
-**桌面模式（默认）**：双击 `wozzle.exe` 即可——系统托盘图标 + WebView2 独立窗口，关闭窗口后进程驻留托盘（右键托盘：打开面板 / 在浏览器中打开 / 开机自启 / 退出），日志写在 `~\.wozzle\wozzle.log`。
+## Build & Run
 
-**端口自定义**（优先级：`-addr` 参数 > 环境变量 `WOZZLE_ADDR` > exe 同目录 `wozzle.json` > 默认 `127.0.0.1:8080`）：
+**Desktop mode (default)** — double-click `wozzle.exe`:
+
+- Tray icon + standalone WebView2 window
+- Closing the window keeps the process alive in the tray (right-click: Open Panel / Open in Browser / Start with Windows / Quit)
+- Logs are written to `~\.wozzle\wozzle.log`
+
+**Listen address** (priority: `-addr` flag > `WOZZLE_ADDR` env var > `wozzle.json` next to the exe > default `127.0.0.1:8080`):
 
 ```json
-// wozzle.json（与 wozzle.exe 同目录，可选）
 {
   "addr": "127.0.0.1:9090",
   "openBrowser": false
 }
 ```
 
-**纯服务模式**（不要托盘/窗口，如挂到终端或脚本里跑）：
+**Headless mode** (no tray/window, console logging):
 
 ```powershell
-.\wozzle.exe -headless                    # 默认端口
-.\wozzle.exe -headless -addr 0.0.0.0:8080 # 局域网可访问（无认证，慎开）
+.\wozzle.exe -headless
+.\wozzle.exe -headless -addr 0.0.0.0:8080   # LAN access — note: no auth, be careful
 ```
 
-**从源码构建**（Go 1.26+）：
+**Build from source** (Go 1.26+):
 
 ```powershell
-# 桌面版（无控制台窗口）
+# desktop build (no console window)
 go build -ldflags "-H windowsgui" -o wozzle.exe .
-# 控制台/开发版
+# console / dev build
 go build -o wozzle-console.exe .
 ```
 
-前端单独构建（改 UI 后需要，产物嵌入 exe）：
+Frontend rebuild (needed after UI changes; output is embedded into the exe):
 
 ```powershell
 cd web
@@ -57,38 +62,36 @@ cd ..
 go build -ldflags "-H windowsgui" -o wozzle.exe .
 ```
 
-开发模式：终端 1 跑 `go run . -headless`，终端 2 跑 `cd web; pnpm dev`（Vite 代理 `/api` → `127.0.0.1:8080`）。
+Development: terminal 1 `go run . -headless`, terminal 2 `cd web; pnpm dev` (Vite proxies `/api` → `127.0.0.1:8080`).
 
-## 架构
+## Architecture
 
 ```
-浏览器 (Vue3 + xterm.js + uPlot)
-   │ HTTP / WebSocket（docs/API.md 契约）
-wozzle.exe (Go, 单二进制, 前端 embed)
-   │ 子进程 + JSON/流式 stdout
-wslc.exe  ── list/stats/logs -f/events/exec -i -t
+Browser (Vue3 + xterm.js + uPlot)
+   │ HTTP / WebSocket  (contract: docs/API.md)
+wozzle.exe (Go, single binary, frontend embedded)
+   │ child processes + JSON / streamed stdout
+wslc.exe ── list / stats / logs -f / events / exec -i -t
    │
-WSL 容器引擎（会话管理器）
+WSL container engine (session manager)
 ```
 
-- `internal/wslc`：wslc CLI 封装与 JSONL 解析（schema 样本见 `docs/schema/`）
-- `internal/store`：容器清单（2s 轮询 + 事件驱动即时刷新）
-- `internal/server`：REST + 4 类 WebSocket、日志流监控器（ring buffer 回填、断流重连）
-- `internal/desktop`：托盘（getlantern/systray）、WebView2 窗口（go-webview2）、开机自启（注册表 Run 键）、控制台附加
-- `internal/config`：wozzle.json 配置加载
-- `web/`：Vue3 前端
-- `tools/wssmoke`：WebSocket 端到端冒烟测试（`go run ./tools/wssmoke`，需 `wozzle-test` 容器在跑）；`tools/genicon.py` 重新生成图标
+- `internal/wslc` — wslc CLI wrapper and JSONL parsing (raw samples in `docs/schema/`)
+- `internal/store` — container inventory (2 s polling + event-driven refresh)
+- `internal/server` — REST + 4 WebSocket channels; log stream supervisor (ring-buffer backfill, stream reconnection)
+- `internal/desktop` — tray (getlantern/systray), WebView2 window (go-webview2), autostart (registry Run key), console attach
+- `internal/config` — `wozzle.json` settings
+- `web/` — Vue 3 frontend
+- `tools/wssmoke` — end-to-end WebSocket smoke tests (`go run ./tools/wssmoke`, expects a running `wozzle-test` container); `tools/genicon.py` regenerates the icon
 
-## 已知限制
+## Known limitations
 
-- exec 终端**不支持会话中途 resize**（wslc CLI 限制，`resize` 消息被忽略；初始行列通过 COLUMNS/LINES 环境变量传递）
-- 桌面窗口关闭后从**托盘菜单「打开面板」**重新打开；若 WebView2 窗口重建失败会自动降级用系统浏览器打开（WebView2 运行时 Win10/11 一般自带）
-- stats 为 2 秒轮询快照（wslc stats 无流式模式）
-- `list` 中 Labels 字段是嵌套字符串，暂未解析（UI 未用到）
-- 默认绑定 127.0.0.1，无认证（本机工具定位；不要暴露到公网）
+- The exec terminal **cannot resize mid-session** (wslc CLI limitation; `resize` messages are ignored, initial rows/cols are passed via `COLUMNS`/`LINES`)
+- After closing the desktop window, reopen it from the tray; if WebView2 recreation fails it falls back to the system browser (the WebView2 runtime is preinstalled on Windows 10/11)
+- Stats are 2-second polling snapshots (`wslc stats` has no streaming mode)
+- Binds to `127.0.0.1` by default with no authentication — keep it local
 
-## 设计文档
+## Documentation
 
-- [docs/PLAN.md](docs/PLAN.md) — 总体方案、选型论证（Go vs Rust vs C++）、里程碑
-- [docs/API.md](docs/API.md) — REST / WebSocket 契约（前后端唯一真相源）
-- [docs/schema/](docs/schema/) — wslc 各命令原始 JSON 输出样本
+- [docs/API.md](docs/API.md) — REST / WebSocket contract (single source of truth)
+- [docs/schema/](docs/schema/) — raw `wslc` JSON output samples

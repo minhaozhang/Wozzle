@@ -4,7 +4,7 @@ import type { Container } from '../types'
 import { onContainerEvent, startEventsStream } from './events'
 import { startStatsStream } from './stats'
 
-// 排序：运行中优先，其次 paused/restarting，再按名称（PLAN.md 默认偏好）
+// 排序：运行中优先，其次 paused/restarting，再按名称
 const STATE_RANK: Record<string, number> = {
   running: 0,
   restarting: 1,

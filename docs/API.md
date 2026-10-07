@@ -81,7 +81,7 @@ S→C  { "t":"error", "message":"..." }
 S→C  { "t":"ready" }          // pty 已建立
 ```
 
-## 前端页面要求（详见 docs/PLAN.md §5）
+## 前端页面要求
 
 路由（history 模式）：`/`（Dashboard）、`/container/:id/logs`、`/container/:id/inspect`、`/container/:id/terminal`。
 
