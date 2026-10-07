@@ -1,8 +1,8 @@
 # Wozzle
 
-> Monitor **WSL 3.0 native containers** (`wslc`) in real time — live logs, resource charts, container events and a web terminal — the way [Dozzle](https://github.com/amir20/dozzle) does it for Docker. Ships as a **single exe** with the web UI embedded.
+<img src="docs/wozzle-icon.png" align="right" width="140" alt="Wozzle logo" />
 
-![icon](docs/wozzle-icon.png)
+> Monitor **WSL 3.0 native containers** (`wslc`) in real time — live logs, resource charts, container events and a web terminal — the way [Dozzle](https://github.com/amir20/dozzle) does it for Docker. Ships as a **single exe** with the web UI embedded.
 
 ## Screenshots
 
