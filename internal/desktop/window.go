@@ -7,39 +7,64 @@ import (
 	"net/http"
 	"os/exec"
 	"time"
+	"unsafe"
 
 	webview "github.com/jchv/go-webview2"
+	"golang.org/x/sys/windows"
 )
 
-// WindowLoop drives the WebView2 host window. It blocks until quitCh fires.
-// openCh requests (re)opening the window after the user closed it; the
-// process stays alive in tray-only mode between windows. The first window
-// opens immediately.
-func WindowLoop(url string, openCh <-chan struct{}, quitCh <-chan struct{}) {
-	open := true
+var (
+	user32               = windows.NewLazySystemDLL("user32.dll")
+	procPeekMessageW     = user32.NewProc("PeekMessageW")
+	procTranslateMessage = user32.NewProc("TranslateMessage")
+	procDispatchMessage  = user32.NewProc("DispatchMessageW")
+)
+
+const pmRemove = 1
+
+// pumpMessages dispatches pending Win32 messages for the calling thread
+// (tray icon menu etc.) without blocking.
+func pumpMessages() {
+	var buf [64]byte // MSG, oversized on purpose
 	for {
-		if !open {
-			select {
-			case <-quitCh:
-				return
-			case <-openCh:
-			}
+		r, _, _ := procPeekMessageW.Call(
+			uintptr(unsafe.Pointer(&buf[0])), 0, 0, 0, pmRemove)
+		if r == 0 {
+			return
 		}
-		open = false
-		if err := showWindow(url); err != nil {
-			openInBrowser(url) // WebView2 failure: degrade to the browser
-			select {
-			case <-quitCh:
-				return
-			case <-openCh:
-				continue
-			}
-		}
-		// window closed by user; keep tray alive, wait for next request
+		_, _, _ = procTranslateMessage.Call(uintptr(unsafe.Pointer(&buf[0])))
+		_, _, _ = procDispatchMessage.Call(uintptr(unsafe.Pointer(&buf[0])))
+	}
+}
+
+// waitPump keeps this thread's message loop alive between webview windows so
+// the tray menu keeps working while only the tray is visible. Returns true
+// when the app should quit.
+func waitPump(openCh <-chan struct{}, quitCh <-chan struct{}) bool {
+	for {
+		pumpMessages()
 		select {
 		case <-quitCh:
-			return
+			return true
 		case <-openCh:
+			return false
+		case <-time.After(50 * time.Millisecond):
+		}
+	}
+}
+
+// WindowLoop drives the WebView2 host window on the main thread. The first
+// window opens immediately; after the user closes it the loop keeps the tray
+// alive (pumping messages) until Open is requested or the app quits.
+func WindowLoop(url string, openCh <-chan struct{}, quitCh <-chan struct{}) {
+	first := true
+	for {
+		if !first && waitPump(openCh, quitCh) {
+			return
+		}
+		first = false
+		if err := showWindow(url); err != nil {
+			openInBrowser(url) // WebView2 failure: degrade to the browser
 		}
 	}
 }
@@ -54,6 +79,7 @@ func showWindow(url string) (err error) {
 	w.SetTitle("Wozzle — WSL 容器监控")
 	w.SetSize(1280, 820, webview.HintNone)
 	w.Navigate(url)
+	go setWindowIcon("Wozzle — WSL 容器监控")
 	w.Run()
 	w.Destroy()
 	return nil

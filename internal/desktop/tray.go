@@ -20,11 +20,14 @@ type TrayHandlers struct {
 	OnQuit    func() // 退出
 }
 
-// StartTray spawns the tray icon on its own goroutine. Menu methods in
-// getlantern/systray are safe from any goroutine on Windows.
-func StartTray(h TrayHandlers, autoStartState func() bool, setAutoStart func(bool) error) <-chan struct{} {
-	started := make(chan struct{})
-	go systray.Run(func() {
+// RegisterTray registers the tray icon on the calling thread's message loop.
+// It must be called from the main OS thread — the same thread that later
+// pumps Win32 messages (the webview loop, or waitPump between windows).
+// This mirrors getlantern/systray's official webview_example: systray.Run
+// from a side goroutine starves the menu message loop and the right-click
+// menu never shows.
+func RegisterTray(h TrayHandlers, autoStartState func() bool, setAutoStart func(bool) error) {
+	systray.Register(func() {
 		systray.SetIcon(iconBytes)
 		systray.SetTooltip("Wozzle — WSL 容器监控")
 
@@ -63,8 +66,5 @@ func StartTray(h TrayHandlers, autoStartState func() bool, setAutoStart func(boo
 				systray.Quit()
 			}
 		}()
-
-		close(started)
 	}, nil)
-	return started
 }

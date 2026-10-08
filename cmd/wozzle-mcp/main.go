@@ -20,7 +20,7 @@ import (
 	"wozzle/internal/wslc"
 )
 
-const version = "0.2.1"
+const version = "0.2.2"
 
 func main() {
 	exe := flag.String("wslc", "wslc", "path to wslc.exe")

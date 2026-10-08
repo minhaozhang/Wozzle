@@ -22,7 +22,7 @@ func serveUI(httpSrv *http.Server, url string) {
 
 	openCh := make(chan struct{}, 1)
 	quitCh := make(chan struct{})
-	desktop.StartTray(desktop.TrayHandlers{
+	desktop.RegisterTray(desktop.TrayHandlers{
 		OnOpen: func() {
 			select {
 			case openCh <- struct{}{}:
