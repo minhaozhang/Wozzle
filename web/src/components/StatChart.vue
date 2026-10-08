@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import uPlot from 'uplot'
-import 'uplot/dist/uplot.min.css'
+import '../assets/uplot.min.css'
 import { getStatSeries, statsFrame, STATS_WINDOW_MS } from '../stores/stats'
 
 const props = defineProps<{

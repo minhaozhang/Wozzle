@@ -18,16 +18,7 @@ stages:
         displayName: Frontend + Windows binaries
         golangVersion: '1.26'
         commands:
-          - set -e
-          - export GOPROXY=https://goproxy.cn,direct CGO_ENABLED=0
-          # node + pnpm for the embedded frontend
-          - command -v node >/dev/null 2>&1 || { curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; apt-get install -y nodejs; }
-          - command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10 --registry=https://registry.npmmirror.com
-          - cd web && pnpm install --frozen-lockfile && pnpm build && cd ..
-          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o wozzle.exe .
-          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o wozzle-console.exe .
-          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o wozzle-mcp.exe ./cmd/wozzle-mcp
-          - ls -lh wozzle*.exe
+          - bash scripts/ci-build.sh
         artifacts:
           - name: WOZZLE_RELEASE
             path:
