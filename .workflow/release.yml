@@ -1,0 +1,65 @@
+version: '1.0'
+name: release
+displayName: Wozzle Release
+triggers:
+  push:
+    tags:
+      prefix:
+        - v
+stages:
+  - name: stage-build
+    displayName: 构建
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@golang
+        name: build-windows
+        displayName: Frontend + Windows binaries
+        golangVersion: '1.26'
+        commands:
+          - set -e
+          - export GOPROXY=https://goproxy.cn,direct CGO_ENABLED=0
+          # node + pnpm for the embedded frontend
+          - command -v node >/dev/null 2>&1 || { curl -fsSL https://deb.nodesource.com/setup_22.x | bash -; apt-get install -y nodejs; }
+          - command -v pnpm >/dev/null 2>&1 || npm install -g pnpm@10 --registry=https://registry.npmmirror.com
+          - cd web && pnpm install --frozen-lockfile && pnpm build && cd ..
+          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w -H windowsgui" -o wozzle.exe .
+          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o wozzle-console.exe .
+          - GOOS=windows GOARCH=amd64 go build -trimpath -ldflags "-s -w" -o wozzle-mcp.exe ./cmd/wozzle-mcp
+          - ls -lh wozzle*.exe
+        artifacts:
+          - name: WOZZLE_RELEASE
+            path:
+              - wozzle.exe
+              - wozzle-console.exe
+              - wozzle-mcp.exe
+        caches:
+          - /go/pkg/mod
+        notify: []
+        strategy:
+          retry: '0'
+  - name: stage-release
+    displayName: 发布
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: release@gitee
+        name: release-gitee
+        displayName: Gitee Release
+        releaseName: Wozzle Release
+        # 发布说明：改这个文件 + 下面的 tagName，然后打同名 tag 推送
+        description: RELEASE_NOTES.md
+        tagName: v0.2.1
+        upstreamArtifact:
+          - WOZZLE_RELEASE
+        assertFiles:
+          - wozzle.exe
+          - wozzle-console.exe
+          - wozzle-mcp.exe
+        prerelease: false
+        allowUpdate: true
+        notify: []
+        strategy:
+          retry: '0'
