@@ -37,6 +37,7 @@ jobs:
         run: |
           go build -ldflags "-s -w -H windowsgui" -o wozzle.exe .
           go build -ldflags "-s -w" -o wozzle-console.exe .
+          go build -ldflags "-s -w" -o wozzle-mcp.exe ./cmd/wozzle-mcp
 
       - name: Create release
         uses: softprops/action-gh-release@v2
@@ -66,3 +67,4 @@ jobs:
           files: |
             wozzle.exe
             wozzle-console.exe
+            wozzle-mcp.exe

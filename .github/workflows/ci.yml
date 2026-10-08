@@ -40,6 +40,9 @@ jobs:
       - name: Build (console)
         run: go build -ldflags "-s -w" -o wozzle-console.exe .
 
+      - name: Build (MCP)
+        run: go build -ldflags "-s -w" -o wozzle-mcp.exe ./cmd/wozzle-mcp
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -47,4 +50,5 @@ jobs:
           path: |
             wozzle.exe
             wozzle-console.exe
+            wozzle-mcp.exe
           retention-days: 7

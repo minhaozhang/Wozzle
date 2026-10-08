@@ -91,8 +91,42 @@ WSL container engine (session manager)
 - `internal/server` — REST + 4 WebSocket channels; log stream supervisor (ring-buffer backfill, stream reconnection)
 - `internal/desktop` — tray (getlantern/systray), WebView2 window (go-webview2), autostart (registry Run key), console attach
 - `internal/config` — `wozzle.json` settings
+- `cmd/wozzle-mcp` — MCP server for AI agents (see below)
 - `web/` — Vue 3 frontend
 - `tools/wssmoke` — end-to-end WebSocket smoke tests (`go run ./tools/wssmoke`, expects a running `wozzle-test` container); `tools/genicon.py` regenerates the icon
+
+## MCP server for AI agents
+
+`wozzle-mcp.exe` exposes WSL containers to any MCP-compatible agent — Claude Desktop, Claude Code, opencode, Cursor, Cline and friends. Agents get clean JSON: sizes parsed to bytes, ids normalized, all the wslc quirks handled.
+
+| Tool | Purpose |
+|---|---|
+| `containers_list` | all containers: id, name, image, state, health, ports |
+| `container_inspect` | full raw inspect JSON |
+| `container_logs` | last N lines (default 100, max 2000), optional `since` |
+| `container_stats` | CPU %, memory, network/block I/O, PIDs snapshot |
+| `exec_run` | one-shot `sh -c` command in a container, output + exit code |
+| `container_action` | start / stop / kill / restart |
+| `images_list` / `system_info` | local images, runtime versions |
+
+Configuration snippets (adjust the path):
+
+```jsonc
+// Claude Desktop — claude_desktop_config.json
+{ "mcpServers": { "wozzle": { "command": "C:\\path\\to\\wozzle-mcp.exe" } } }
+```
+
+```bash
+# Claude Code
+claude mcp add wozzle -- C:\path\to\wozzle-mcp.exe
+```
+
+```jsonc
+// opencode — opencode.json
+{ "mcp": { "wozzle": { "type": "local", "command": ["C:\\path\\to\\wozzle-mcp.exe"], "enabled": true } } }
+```
+
+A companion agent skill lives in [`skills/wslc-containers/SKILL.md`](skills/wslc-containers/SKILL.md) — copy it into your agent's skills directory (e.g. `.claude/skills/`) to teach it the wslc CLI quirks as a fallback when the MCP server is not connected.
 
 ## Known limitations
 

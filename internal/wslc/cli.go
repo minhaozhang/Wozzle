@@ -346,6 +346,23 @@ func (c *CLI) Exec(ctx context.Context, id, command string, rows, cols int) *exe
 	return c.command(ctx, args...)
 }
 
+// ExecOneShot runs a command inside a container without a TTY and returns
+// its combined output and exit code (0 on success). The command runs via
+// `sh -c`, so shell features are available.
+func (c *CLI) ExecOneShot(ctx context.Context, id, command string) (string, int, error) {
+	cmd := c.command(ctx, "exec", "-i", id, "sh", "-c", command)
+	var buf bytes.Buffer
+	cmd.Stdout = &buf
+	cmd.Stderr = &buf
+	if err := cmd.Run(); err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			return buf.String(), ee.ExitCode(), nil
+		}
+		return buf.String(), -1, fmt.Errorf("wslc exec %s: %w", id, err)
+	}
+	return buf.String(), 0, nil
+}
+
 // ---- lifecycle actions ----
 
 // Action runs a lifecycle verb: start, stop, kill or restart.
