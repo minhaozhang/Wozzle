@@ -20,3 +20,18 @@
   启动时的环境自检与引导提示（wsl --update --pre-release 需 ≥2.9.9）。
 - **状态机/事件模型**：wslc-state-aware.md 中的生命周期定义可对照 Wozzle 的
   events 解析逻辑。
+
+## 实测补充（2026-10-10，两台机器交叉验证）
+
+wslc bridge 模式的真实网络姿态：**仅公网出站可用**。
+
+| 容器 → 目标 | 结果 |
+|---|---|
+| 公网 IP / 域名 | ✓（会话 VM NAT 出站） |
+| Windows 宿主服务（LAN IP 或 172.17.0.1 的 TCP） | ✗ 快速 RST——会话 VM 自己拒绝，包未到 Windows（ICMP ping 宿主能通，是假阳性） |
+| 其他局域网机器 | ✗ no route / unreachable |
+
+结论：容器需要访问的依赖（backend/Redis 等）**不能放在 Windows 宿主或其他局域网机器上**，
+要么与使用方跑在同一个 wslc bridge 网络里（容器间互通），要么等官方开放 VM 级网络能力
+（路线图 SDK dep #1）。与 wslc-state-aware.md "does not promise reachability across NAT"
+的说法一致。
