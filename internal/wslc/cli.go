@@ -349,8 +349,14 @@ func (c *CLI) Exec(ctx context.Context, id, command string, rows, cols int) *exe
 // ExecOneShot runs a command inside a container without a TTY and returns
 // its combined output and exit code (0 on success). The command runs via
 // `sh -c`, so shell features are available.
+//
+// Note: no `-i` here on purpose. With `-i` wslc keeps the child's stdin open,
+// and when the caller has no real console behind it (service/hidden window)
+// any exec living longer than ~1s dies with ERROR_INVALID_HANDLE, wedging
+// the container's exec channel until restart. Without `-i` long-running
+// commands work fine.
 func (c *CLI) ExecOneShot(ctx context.Context, id, command string) (string, int, error) {
-	cmd := c.command(ctx, "exec", "-i", id, "sh", "-c", command)
+	cmd := c.command(ctx, "exec", id, "sh", "-c", command)
 	var buf bytes.Buffer
 	cmd.Stdout = &buf
 	cmd.Stderr = &buf
