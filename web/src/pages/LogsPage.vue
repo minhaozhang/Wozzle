@@ -123,6 +123,15 @@ const statusText = computed(() => {
   }
 })
 
+/** end 帧的 reason → 用户可读文案 */
+const endedText = computed(() => {
+  const r = ended.value
+  if (!r) return ''
+  if (r === 'container-exited') return '容器未运行，实时日志已停止（历史日志仍可查看，启动容器后可重新连接）'
+  if (r === 'stream-closed') return '日志流已关闭'
+  return `日志流已结束：${r}`
+})
+
 let ro: ResizeObserver | null = null
 
 onMounted(() => {
@@ -200,7 +209,7 @@ function goTab(tab: 'inspect' | 'terminal'): void {
     </header>
 
     <div v-if="ended" class="logs-banner ended">
-      <span>日志流已结束：{{ ended }}</span>
+      <span>{{ endedText }}</span>
       <button class="btn" @click="reconnect()">重新连接</button>
     </div>
     <div v-else-if="status === 'reconnecting' || status === 'connecting'" class="logs-banner info">
@@ -229,7 +238,9 @@ function goTab(tab: 'inspect' | 'terminal'): void {
 
     <div v-if="total === 0" class="log-empty">
       <template v-if="filterText">没有匹配的日志行</template>
+      <template v-else-if="container && container.state !== 'running'">容器未运行 — 没有可显示的历史日志</template>
       <template v-else-if="status === 'open'">暂无日志输出，等待容器写入…</template>
+      <template v-else-if="ended">日志流已结束</template>
       <template v-else>正在连接 /api/ws/logs/{{ id.slice(0, 12) }}…</template>
     </div>
 

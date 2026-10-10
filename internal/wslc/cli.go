@@ -1,7 +1,6 @@
 package wslc
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -295,24 +294,37 @@ func (c *CLI) LogsStream(ctx context.Context, id string, opt LogsOptions) (*exec
 }
 
 // Logs collects historical log lines (no follow).
+//
+// wslc quirk: for running containers the log lines arrive on stdout, but for
+// exited containers wslc writes them to stderr (still exit code 0), while a
+// real CLI failure exits non-zero with the error message on stderr. We therefore
+// treat "exit 0, stdout empty, stderr non-empty" as "logs are on stderr".
 func (c *CLI) Logs(ctx context.Context, id string, opt LogsOptions) ([]LogLine, error) {
 	opt.Follow = false
-	cmd, stdout, err := c.LogsStream(ctx, id, opt)
-	if err != nil {
-		return nil, err
-	}
-	defer func() {
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill()
+	cmd := c.command(ctx, append(opt.args(), id)...)
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
+	if err := cmd.Run(); err != nil {
+		msg := strings.TrimSpace(errBuf.String())
+		if msg == "" {
+			msg = err.Error()
 		}
-	}()
-	var lines []LogLine
-	sc := bufio.NewScanner(stdout)
-	sc.Buffer(make([]byte, 64*1024), 1024*1024)
-	for sc.Scan() {
-		lines = append(lines, ParseLogLine(sc.Text()))
+		return nil, fmt.Errorf("wslc %s %s: %s", strings.Join(opt.args(), " "), id, msg)
 	}
-	return lines, nil
+	out := outBuf.String()
+	if strings.TrimSpace(out) == "" && errBuf.Len() > 0 {
+		out = errBuf.String()
+	}
+	lines := strings.Split(out, "\n")
+	if n := len(lines); n > 0 && lines[n-1] == "" {
+		lines = lines[:n-1] // drop the artifact of the trailing newline
+	}
+	var res []LogLine
+	for _, l := range lines {
+		res = append(res, ParseLogLine(strings.TrimRight(l, "\r")))
+	}
+	return res, nil
 }
 
 // ---- events ----

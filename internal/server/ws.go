@@ -95,6 +95,21 @@ func (s *Server) handleWSLogs(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	writer := &wsWriter{c: c}
 
+	// Exited containers cannot be followed. Send whatever history wslc still
+	// has (note: wslc writes exited-container logs to stderr; CLI.Logs handles
+	// that), then a terminal end frame, and close the socket cleanly.
+	if cont.State != "running" {
+		lines, err := s.provider.Logs(ctx, cont.ID, wslc.LogsOptions{Tail: tail})
+		if err != nil {
+			_ = writer.json(ctx, errorMsg{T: "error", Message: err.Error()})
+		} else if len(lines) > 0 {
+			_ = writer.json(ctx, backfillMsg{T: "backfill", Lines: lines})
+		}
+		_ = writer.json(ctx, endMsg{T: "end", Reason: "container-exited"})
+		_ = c.Close(websocket.StatusNormalClosure, "container not running")
+		return
+	}
+
 	sub, err := s.logs.Subscribe(cont.ID, tail)
 	if err != nil {
 		_ = writer.json(ctx, errorMsg{T: "error", Message: err.Error()})
@@ -181,6 +196,7 @@ func (s *Server) handleWSLogs(w http.ResponseWriter, r *http.Request) {
 			_ = writer.json(ctx, noticeMsg{T: "notice", Message: note})
 		case reason := <-sub.end:
 			_ = writer.json(ctx, endMsg{T: "end", Reason: reason})
+			_ = c.Close(websocket.StatusNormalClosure, reason)
 			return
 		case <-ctx.Done():
 			return
