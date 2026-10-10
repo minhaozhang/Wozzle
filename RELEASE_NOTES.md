@@ -1,16 +1,17 @@
-# Wozzle v0.2.1
+# Wozzle v0.2.2
 
-Dozzle-style monitoring for **WSL 3.0 native containers** (`wslc`), in a single binary. 新增 MCP server，让各类 AI agent（Claude / opencode / Cursor…）直接管理 WSL 容器。
+Dozzle-style monitoring for **WSL 3.0 native containers** (`wslc`), in a single binary. 本版修复 exec 断连、托盘菜单与图标问题，UI 升级为 Dozzle 风格仪表盘。
 
-## Highlights
+## What's New / 修复与改进
 
-- **Live log streaming** — tail/backfill, regex & text filtering, pause/resume, download, auto-reconnect across container restarts
-- **Resource monitoring** — CPU / memory / network / block I/O / PIDs with rolling charts (2 s refresh)
-- **Event-driven** container list refresh
-- **Web terminal** — xterm.js wired to `wslc exec`
-- **Container control** — start / stop / kill / restart / remove, behind confirmation dialogs
-- **Desktop mode** — system tray + WebView2 window, boot autostart, `wozzle.json` config, headless server mode
-- **NEW: `wozzle-mcp.exe`** — MCP server (8 tools: containers_list / container_inspect / container_logs / container_stats / exec_run / container_action / images_list / system_info)，stdio 传输，兼容 Claude Desktop、Claude Code、opencode 等
+- **FIX: exec 断连** — `wslc exec -i` 在无真实控制台的调用方（服务/隐藏窗口进程）下，超过 ~1 秒即以 `ERROR_INVALID_HANDLE` 崩溃并卡死容器 exec 通道。一次性执行（含 MCP `exec_run`）不再传 `-i`，长命令稳定；交互式网页终端保留 `-i -t`（有真实 stdin 管道）
+  - Fix: `wslc exec -i` died with `ERROR_INVALID_HANDLE` after ~1s when the caller had no real console, wedging the container's exec channel. One-shot exec (incl. MCP `exec_run`) no longer passes `-i`
+- **FIX: 托盘右键菜单不显示** — systray 改为主线程 Register + 窗口间消息泵，菜单稳定弹出
+- **FIX: exe / 任务栏图标缺失** — 内嵌图标资源（syso）+ WM_SETICON
+- **NEW: Dozzle 风格仪表盘** — 表格视图 + 侧边导航，信息密度更高
+- **NEW: WSL 宿主指标** — 宿主 CPU / 内存 / 网络一并展示（`internal/wslc/host.go`）
+- **FIX: 已退出容器的日志** — 读取 wslc stderr 日志，WebSocket 以 1000 正常关闭
+- **Docs: `docs/ref/`** — 收录 microsoft/mxc 官方 wslc 参考文档（入门 / 状态机 / 注册表策略 / SDK 绑定 / 路线图），附实测网络姿态结论：bridge 模式仅公网出站，容器→宿主/局域网 TCP 不通（会话 VM 拦截）
 
 ## Requirements
 

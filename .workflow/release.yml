@@ -42,7 +42,7 @@ stages:
         releaseName: Wozzle Release
         # 发布说明：改这个文件 + 下面的 tagName，然后打同名 tag 推送
         description: RELEASE_NOTES.md
-        tagName: v0.2.1
+        tagName: v0.2.2
         upstreamArtifact:
           - WOZZLE_RELEASE
         assertFiles:
