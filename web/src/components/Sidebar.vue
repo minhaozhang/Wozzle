@@ -51,6 +51,18 @@ const wsDotClass = (s: string): string =>
       </div>
     </div>
 
+    <nav class="side-nav">
+      <router-link to="/" class="nav-item" :class="{ active: route.path === '/' }">
+        <svg viewBox="0 0 16 16" class="nav-ico" aria-hidden="true">
+          <rect x="1" y="1" width="6" height="6" rx="1.5" />
+          <rect x="9" y="1" width="6" height="6" rx="1.5" />
+          <rect x="1" y="9" width="6" height="6" rx="1.5" />
+          <rect x="9" y="9" width="6" height="6" rx="1.5" />
+        </svg>
+        <span>仪表盘</span>
+      </router-link>
+    </nav>
+
     <div class="side-search">
       <span class="search-icon">⌕</span>
       <input
@@ -63,6 +75,7 @@ const wsDotClass = (s: string): string =>
       <span v-if="containersStore.filter" class="search-count">{{ filteredContainers.length }}</span>
     </div>
 
+    <div class="side-group">容器</div>
     <div class="side-list">
       <div v-if="containersStore.error && containersStore.list.length === 0" class="side-empty">
         <span class="icon">✕</span>
@@ -136,6 +149,47 @@ const wsDotClass = (s: string): string =>
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.side-nav {
+  padding: 0 12px 10px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--text-dim);
+  font-size: 13px;
+  font-weight: 550;
+  text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.nav-item:hover {
+  background: var(--bg-elev);
+  color: var(--text);
+}
+.nav-item.active {
+  background: rgba(79, 140, 255, 0.12);
+  color: var(--text);
+}
+.nav-ico {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: currentColor;
+  opacity: 0.75;
+}
+.nav-item.active .nav-ico {
+  opacity: 1;
+  fill: #4f8cff;
+}
+.side-group {
+  padding: 0 14px 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-faint);
 }
 .side-search {
   position: relative;

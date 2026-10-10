@@ -267,15 +267,3 @@ a {
   font-size: 12.5px;
 }
 
-/* ---------- uPlot 暗色微调 ---------- */
-.uplot {
-  font-family: var(--sans);
-}
-.uplot .legend {
-  font-size: 10.5px;
-  color: var(--text-dim);
-}
-.uplot .axis,
-.uplot .legend {
-  stroke: none;
-}
