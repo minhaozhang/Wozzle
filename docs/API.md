@@ -56,12 +56,23 @@ C→S  { "t":"pause" } / { "t":"resume" } / { "t":"tail", "n":100 } / { "t":"pin
 S→C  { "t":"pong" }
 ```
 
+> 已退出的容器：连接后不启动 follow 进程 —— 直接回填历史日志（wslc 会把已退出容器的日志写到
+> stderr，服务端已兼容），随即发送 `end`（reason=`container-exited`），并以 1000 正常关闭连接。
+> 实时流结束后服务端同样以 1000 关闭（不再异常断开）。
+
 ### 2. `/api/ws/stats`（每 2s 一帧，仅在有客户端时轮询）
 
 ```
-S→C  { "t":"stats", "ts":"...", "stats":[Stat...] }
+S→C  { "t":"stats", "ts":"...", "stats":[Stat...], "host":HostStat? }
 S→C  { "t":"statsError", "error":"..." }
 ```
+
+> `host` 为可选字段：WSL 宿主机（容器所在的 utility VM，所有 WSL2 发行版共享）实时指标。
+> 通过 `wsl.exe`（优先 `docker-desktop` 发行版，回退默认发行版）读取 `/proc/meminfo`、
+> `/proc/stat`、`/proc/uptime` 计算得出；读取失败时整帧省略 `host`，不影响容器 stats。
+> `cpuPercent` 由相邻两帧的 /proc/stat 差值求得，首帧恒为 0。
+> HostStat：`{ cpuPercent, memBytes, memTotalBytes, memPercent, uptimeSeconds }`
+> （memBytes = MemTotal − MemAvailable）。
 
 ### 3. `/api/ws/events`
 

@@ -1,6 +1,6 @@
 import { reactive } from 'vue'
 import { ReconnectingSocket, wsUrl, type SocketStatus } from '../composables/ReconnectingSocket'
-import type { Stat, StatsServerMessage } from '../types'
+import type { HostStat, Stat, StatsServerMessage } from '../types'
 
 /** 图表滚动窗口：约 5 分钟 */
 export const STATS_WINDOW_MS = 5 * 60 * 1000
@@ -13,18 +13,22 @@ export interface StatSample {
   mem: number // %
   memBytes: number
   memLimitBytes: number
+  netRx: number
+  netTx: number
 }
 
 interface StatsState {
   status: SocketStatus
   error: string
   latest: Record<string, Stat>
+  host: HostStat | null
 }
 
 export const statsStore = reactive<StatsState>({
   status: 'connecting',
   error: '',
   latest: {},
+  host: null,
 })
 
 /** 非响应式历史序列（chart 组件按 frame 计数器拉取） */
@@ -52,10 +56,13 @@ function handleFrame(msg: Extract<StatsServerMessage, { t: 'stats' }>): void {
       mem: Number.isFinite(s.memPercent) ? s.memPercent : 0,
       memBytes: s.memBytes ?? 0,
       memLimitBytes: s.memLimitBytes ?? 0,
+      netRx: s.netRx ?? 0,
+      netTx: s.netTx ?? 0,
     })
     const cutoff = now - RETAIN_MS
     while (arr.length > 0 && arr[0].t < cutoff) arr.shift()
   }
+  statsStore.host = msg.host ?? null
   // 清理长时间没有数据的容器序列
   for (const [id, arr] of history) {
     if (arr.length === 0 || now - arr[arr.length - 1].t > STALE_MS) history.delete(id)
@@ -82,7 +89,7 @@ export function startStatsStream(): void {
   socket.connect()
 }
 
-/** 取某容器的滚动序列（供 uPlot setData） */
+/** 取某容器的滚动序列（供 sparkline / 网络速率计算） */
 export function getStatSeries(id: string): StatSample[] {
   return history.get(id) ?? []
 }

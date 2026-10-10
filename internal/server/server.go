@@ -28,6 +28,8 @@ type Server struct {
 	logs         *LogSupervisor
 	statsClients atomic.Int32
 	lastStats    atomic.Value // statsFrame
+	lastHostErr  atomic.Value // string
+	hostMon      *wslc.HostMonitor
 	cancel       context.CancelFunc
 }
 
@@ -70,9 +72,10 @@ func (h *hub) publish(v any) {
 }
 
 type statsFrame struct {
-	T     string      `json:"t"`
-	TS    string      `json:"ts"`
-	Stats []wslc.Stat `json:"stats"`
+	T     string         `json:"t"`
+	TS    string         `json:"ts"`
+	Stats []wslc.Stat    `json:"stats"`
+	Host  *wslc.HostStats `json:"host,omitempty"` // WSL 宿主机指标，读取失败时缺省
 }
 
 type statsError struct {
@@ -89,6 +92,7 @@ func New(p *wslc.CLI, st *store.Store, dist fs.FS, version string) *Server {
 		version:  version,
 		eventHub: newHub(),
 		statsHub: newHub(),
+		hostMon:  wslc.NewHostMonitor("docker-desktop"),
 	}
 	s.logs = NewLogSupervisor(p, st)
 	if err := s.refresh(); err != nil {
@@ -207,6 +211,16 @@ func (s *Server) statsLoop(ctx context.Context) {
 				stats = []wslc.Stat{}
 			}
 			fr := statsFrame{T: "stats", TS: time.Now().UTC().Format(time.RFC3339), Stats: stats}
+			// 主机指标独立采集：失败不影响容器 stats 分发，仅错误变化时记日志
+			if host, herr := s.hostMon.Sample(ctx); herr == nil {
+				fr.Host = host
+				s.lastHostErr.Store("")
+			} else {
+				if prev, _ := s.lastHostErr.Load().(string); prev != herr.Error() {
+					log.Printf("host stats: %v", herr)
+					s.lastHostErr.Store(herr.Error())
+				}
+			}
 			s.lastStats.Store(fr)
 			s.statsHub.publish(fr)
 		}

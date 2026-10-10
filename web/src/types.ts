@@ -40,6 +40,15 @@ export interface Stat {
   ts: string
 }
 
+/** WSL 宿主机（容器所在的 utility VM）实时指标，stats 帧可选字段 */
+export interface HostStat {
+  cpuPercent: number
+  memBytes: number
+  memTotalBytes: number
+  memPercent: number
+  uptimeSeconds: number
+}
+
 export interface Event {
   type: string
   id: string
@@ -94,7 +103,7 @@ export type LogsClientMessage =
 
 // /api/ws/stats
 export type StatsServerMessage =
-  | { t: 'stats'; ts: string; stats: Stat[] }
+  | { t: 'stats'; ts: string; stats: Stat[]; host?: HostStat }
   | { t: 'statsError'; error: string }
 
 // /api/ws/events

@@ -64,3 +64,32 @@ export function formatPercent(n: number | undefined | null): string {
   if (n === undefined || n === null || !Number.isFinite(n)) return '—'
   return `${n >= 100 ? n.toFixed(0) : n.toFixed(1)}%`
 }
+
+/** 运行时长：3d 4h / 2h 13m / 5m 12s */
+export function fmtUptime(seconds: number | undefined | null): string {
+  if (seconds === undefined || seconds === null || !Number.isFinite(seconds) || seconds < 0) return '—'
+  const s = Math.floor(seconds)
+  const d = Math.floor(s / 86400)
+  const h = Math.floor((s % 86400) / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  const ss = s % 60
+  if (d > 0) return `${d}d ${h}h`
+  if (h > 0) return `${h}h ${m}m`
+  if (m > 0) return `${m}m ${ss}s`
+  return `${ss}s`
+}
+
+/** 速率：12.3 KB/s / 1.2 MB/s */
+export function formatRate(bytesPerSec: number | undefined | null): string {
+  if (bytesPerSec === undefined || bytesPerSec === null || !Number.isFinite(bytesPerSec) || bytesPerSec < 0)
+    return '—'
+  if (bytesPerSec < 1024) return `${bytesPerSec.toFixed(0)} B/s`
+  const units = ['KB/s', 'MB/s', 'GB/s']
+  let v = bytesPerSec / 1024
+  let i = 0
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024
+    i += 1
+  }
+  return `${v >= 100 ? v.toFixed(0) : v.toFixed(1)} ${units[i]}`
+}
